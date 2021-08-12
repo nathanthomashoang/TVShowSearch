@@ -4,21 +4,44 @@ const searchDisplay = document.querySelector('#searchForm .dropdown-toggle')
 const resultsDisplay = document.querySelector('#results .row')
 const dateDisplay = document.querySelector('#todayDate')
 const jumboCarousel = document.querySelector('#jumboCarousel');
+const loadingSpinner = document.querySelector('#loadingSpinner');
 let searchType = 'Show Title';
-const todayDate = new Date().toString().slice(4,15);
+const todayDate = new Date().toDateString().slice(4);
 const searchDate = new Date().toJSON().slice(0,10);
+const tvScheduleData = JSON.parse(localStorage.getItem('tvScheduleData'));
+const loading = false; 
 
 dateDisplay.innerHTML = todayDate;
 
 // Schedule search - API request to TV Maze
-const getSchedule = async (config) => {
+const getSchedule = async () => {
     try{
-        const results = await axios.get('https://api.tvmaze.com/schedule/', config);
+        const results = await axios.get('https://api.tvmaze.com/schedule/');
         return results.data;
     }catch(error) {
         console.log('There has been an error:', error);
     }
 } 
+
+// returns boolean for whether or not data is outdated (daily)
+const isOutdatedData = (receivedAt) => {
+    if (!receivedAt || isNaN(Date.parse(receivedAt))) {
+        return true;
+    }
+    const todayDate = new Date().toDateString();
+    return todayDate !== receivedAt;
+}
+
+// verifies whether or not tvScheduleData exists and will fetch data if it does not exist OR if data is outdated
+const verifyScheduleData = async() => {
+    if (!tvScheduleData || isOutdatedData(tvScheduleData.receivedAt)) {
+        try {
+            localStorage.setItem('tvScheduleData', JSON.stringify({data: await getSchedule(), receivedAt: new Date().toDateString()}));
+        } catch(error) {
+            console.log('There has been an error:', error);
+        }
+    }
+}
 
 // Show Title search - API request to TV Maze
 const getShows = async (config) => {
@@ -180,9 +203,10 @@ const createPeopleResults = async (config) => {
 }
 
 // schedule results & update Jumbotron Carousel
-const createScheduleResults = async (config) => {
-    const schedule = await getSchedule(config);
-    
+const createScheduleResults = async () => {
+    loadingSpinner.classList.remove('d-none');
+    await verifyScheduleData();
+    const schedule = JSON.parse(localStorage.getItem('tvScheduleData')).data;
     if (schedule.length > 0) {
         const scheduleByWeight = schedule.slice(0);
         scheduleByWeight.sort(function(a, b) {
@@ -213,6 +237,9 @@ const createScheduleResults = async (config) => {
             createCard(4, 'scheduleCard', show.name, result.url, subtitle, result.name.substring(0,50), image);
         }   
     }
+    loadingSpinner.classList.add('d-none');
+    jumboCarousel.classList.remove('d-none');
+    resultsDisplay.classList.remove('d-none');
 }
 
 // search selection
@@ -248,5 +275,4 @@ form.addEventListener('submit', async (e) => {
     form.elements.q.value = '';
 })
 
-const searchConfig = { params: {} };
-createScheduleResults(searchConfig);
+createScheduleResults();

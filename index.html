@@ -49,7 +49,12 @@
                         <img src="images/aa16121a461d410fb8517b6f761ec636.png" alt="">
                     </a>
                 </div>
-                <div class="jumboCarousel mb-3" id="jumboCarousel">
+                <div class="d-flex justify-content-center my-5 py-5 d-none" id="loadingSpinner">
+                    <div class="spinner-border" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+                <div class="jumboCarousel mb-3 d-none" id="jumboCarousel">
                     <div class="mb-4">
                         <h1 class="d-inline">What's on tonight?</h1>
                         <span class="lead" id="todayDate"></span>
@@ -89,7 +94,7 @@
                     </div>
                 </div>
                 <div id="results">
-                    <div class="row" id="resultsRow">
+                    <div class="row d-none" id="resultsRow">
                         <div class="mt-4">
                             <h2>Additional shows airing today</h2>
                         </div>
